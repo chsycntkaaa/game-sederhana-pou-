@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPou - Virtual Pet Simulator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-resources/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-900 font-sans antialiased text-slate-100 flex items-center justify-center min-h-screen p-2 sm:p-4 select-none">
+
+  <!-- Main Game Container -->
+  <div id="game-app" class="w-full max-w-md bg-slate-800 rounded-3xl shadow-2xl border-4 border-slate-700 overflow-hidden relative flex flex-col h-[750px]">
+    
+    <!-- Top Header: Stats Bar -->
+    <header class="bg-slate-900/90 backdrop-blur border-b border-slate-700/60 p-3 z-20">
+      <div class="flex justify-between items-center mb-2">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-sm" id="level-badge">
+            1
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider" id="pet-name-display">Pou</div>
+            <div class="w-24 bg-slate-700 rounded-full h-1.5 overflow-hidden">
+              <div id="xp-bar" class="bg-amber-400 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700">
+          <i class="fa-solid fa-coins text-amber-400 mr-1.5 text-sm"></i>
+          <span id="coin-count" class="font-black text-amber-300 text-sm">100</span>
+        </div>
+      </div>
+
+      <!-- Vital Meters Grid -->
+      <div class="grid grid-cols-4 gap-1.5 text-[10px] font-bold">
+        <!-- Hunger -->
+        <div class="bg-slate-800/70 p-1.5 rounded-xl border border-slate-700/50">
+          <div class="flex justify-between text-orange-400 mb-0.5">
+            <span><i class="fa-solid fa-utensils mr-1"></i>Lapar</span>
+            <span id="stat-hunger-num">100</span>
+          </div>
+          <div class="w-full bg-slate-700/80 rounded-full h-1.5 overflow-hidden">
+            <div id="stat-hunger-bar" class="bg-orange-500 h-1.5 rounded-full transition-all duration-500" style="width: 100%"></div>
+          </div>
+        </div>
+        <!-- Energy -->
+        <div class="bg-slate-800/70 p-1.5 rounded-xl border border-slate-700/50">
+          <div class="flex justify-between text-amber-400 mb-0.5">
+            <span><i class="fa-solid fa-bolt mr-1"></i>Energi</span>
+            <span id="stat-energy-num">100</span>
+          </div>
+          <div class="w-full bg-slate-700/80 rounded-full h-1.5 overflow-hidden">
+            <div id="stat-energy-bar" class="bg-amber-400 h-1.5 rounded-full transition-all duration-500" style="width: 100%"></div>
+          </div>
+        </div>
+        <!-- Hygiene -->
+        <div class="bg-slate-800/70 p-1.5 rounded-xl border border-slate-700/50">
+          <div class="flex justify-between text-cyan-400 mb-0.5">
+            <span><i class="fa-solid fa-soap mr-1"></i>Bersih</span>
+            <span id="stat-hygiene-num">100</span>
+          </div>
+          <div class="w-full bg-slate-700/80 rounded-full h-1.5 overflow-hidden">
+            <div id="stat-hygiene-bar" class="bg-cyan-400 h-1.5 rounded-full transition-all duration-500" style="width: 100%"></div>
+          </div>
+        </div>
+        <!-- Happiness -->
+        <div class="bg-slate-800/70 p-1.5 rounded-xl border border-slate-700/50">
+          <div class="flex justify-between text-pink-400 mb-0.5">
+            <span><i class="fa-solid fa-face-smile mr-1"></i>Senang</span>
+            <span id="stat-happy-num">100</span>
+          </div>
+          <div class="w-full bg-slate-700/80 rounded-full h-1.5 overflow-hidden">
+            <div id="stat-happy-bar" class="bg-pink-400 h-1.5 rounded-full transition-all duration-500" style="width: 100%"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Room Display Area -->
+    <main id="room-viewport" class="relative flex-1 bg-amber-100 overflow-hidden flex flex-col items-center justify-between p-4 transition-colors duration-700">
+      
+      <!-- Night Overlay for Sleeping -->
+      <div id="night-overlay" class="absolute inset-0 bg-slate-950/80 pointer-events-none opacity-0 transition-opacity duration-700 z-10 flex flex-col items-center justify-start pt-12">
+        <div class="text-amber-300/80 text-sm font-bold tracking-widest animate-pulse"><i class="fa-solid fa-moon mr-2"></i>POU SEDANG TIDUR...</div>
+      </div>
+
+      <!-- Floating Particles Container -->
+      <div id="fx-layer" class="absolute inset-0 pointer-events-none z-15 overflow-hidden"></div>
+
+      <!-- Room Header / Title -->
+      <div class="z-10 bg-black/20 backdrop-blur px-4 py-1 rounded-full border border-white/20 text-xs font-extrabold tracking-widest text-white uppercase shadow-sm flex items-center gap-2">
+        <span id="room-title">Dapur</span>
+      </div>
+
+      <!-- Main Interactive Pet Display -->
+      <div id="pet-stage" class="relative my-auto flex flex-col items-center justify-center cursor-pointer group">
+        
+        <!-- Pet SVG Graphic Container -->
+        <div id="pet-avatar" class="relative transition-transform duration-200 active:scale-95">
+          <svg id="pet-svg" width="180" height="170" viewBox="0 0 200 180" class="drop-shadow-2xl">
+            <!-- Shadow -->
+            <ellipse cx="100" cy="165" rx="70" ry="12" fill="rgba(0,0,0,0.15)" />
+            <!-- Body -->
+            <path id="pet-body" d="M 40 140 C 20 80, 50 30, 100 30 C 150 30, 180 80, 160 140 C 145 165, 55 165, 40 140 Z" fill="#b5835a" stroke="#7c5230" stroke-width="6" />
+            <!-- Eyes Base -->
+            <g id="pet-eyes">
+              <!-- Left Eye -->
+              <ellipse cx="75" cy="85" rx="16" ry="20" fill="#ffffff" stroke="#7c5230" stroke-width="3" />
+              <circle id="pupil-left" cx="77" cy="85" r="7" fill="#2d1b0e" />
+              <circle cx="74" cy="81" r="3" fill="#ffffff" />
+              <!-- Right Eye -->
+              <ellipse cx="125" cy="85" rx="16" ry="20" fill="#ffffff" stroke="#7c5230" stroke-width="3" />
+              <circle id="pupil-right" cx="123" cy="85" r="7" fill="#2d1b0e" />
+              <circle cx="122" cy="81" r="3" fill="#ffffff" />
+            </g>
+            <!-- Mouth -->
+            <path id="pet-mouth" d="M 85 120 Q 100 135 115 120" fill="none" stroke="#523218" stroke-width="4" stroke-linecap="round" />
+            <!-- Cheeks -->
+            <ellipse id="blush-left" cx="60" cy="105" rx="8" ry="5" fill="#ff7b7b" opacity="0.5" />
+            <ellipse id="blush-right" cx="140" cy="105" rx="8" ry="5" fill="#ff7b7b" opacity="0.5" />
+            
+            <!-- Accessories Layer -->
+            <!-- Glasses -->
+            <g id="acc-glasses" class="hidden">
+              <rect x="55" y="70" width="38" height="30" rx="6" fill="none" stroke="#1e293b" stroke-width="4"/>
+              <rect x="107" y="70" width="38" height="30" rx="6" fill="none" stroke="#1e293b" stroke-width="4"/>
+              <line x1="93" y1="83" x2="107" y2="83" stroke="#1e293b" stroke-width="4"/>
+            </g>
+            <!-- Hat -->
+            <g id="acc-hat" class="hidden">
+              <path d="M 60 40 Q 100 10 140 40 Z" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+              <rect x="50" y="37" width="100" height="8" rx="4" fill="#ffffff"/>
+              <circle cx="100" cy="15" r="7" fill="#ffffff"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Dirt / Poop Overlay Elements -->
+        <div id="poop-container" class="absolute bottom-0 w-full flex justify-between pointer-events-auto px-2"></div>
+
+        <!-- Soap Bubbles Layer (Bathroom Mode) -->
+        <div id="soap-layer" class="absolute inset-0 pointer-events-none"></div>
+      </div>
+
+      <!-- Interactive Action Dock (Specific to active room) -->
+      <div id="action-dock" class="z-10 w-full min-h-[72px] bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/20 p-2 flex items-center justify-center gap-3">
+        <!-- Dynamic tools rendered via JS -->
+      </div>
+    </main>
+
+    <!-- Minigame Overlay (Canvas) -->
+    <div id="minigame-screen" class="absolute inset-0 bg-slate-900 z-30 hidden flex-col">
+      <div class="bg-slate-800 p-3 border-b border-slate-700 flex justify-between items-center">
+        <div class="font-bold text-amber-400 flex items-center gap-2">
+          <i class="fa-solid fa-gamepad"></i> Tangkap Makanan!
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-sm font-bold">Skor: <span id="game-score" class="text-emerald-400">0</span></div>
+          <button id="close-game-btn" class="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div class="relative flex-1 bg-slate-950 overflow-hidden">
+        <canvas id="game-canvas" class="w-full h-full block"></canvas>
+      </div>
+    </div>
+
+    <!-- Wardrobe / Shop Modal -->
+    <div id="shop-modal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-30 hidden flex-col p-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <h3 class="font-black text-amber-400 text-lg flex items-center gap-2">
+          <i class="fa-solid fa-store"></i> Toko & Lemari Pakaian
+        </h3>
+        <button id="close-shop-btn" class="text-slate-400 hover:text-white text-xl p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Shop Tabs -->
+      <div class="flex gap-2 my-3">
+        <button id="tab-colors" class="shop-tab active">Warna Body</button>
+        <button id="tab-hats" class="shop-tab">Topi</button>
+        <button id="tab-glasses" class="shop-tab">Kacamata</button>
+      </div>
+
+      <!-- Shop Items Grid -->
+      <div id="shop-grid" class="flex-1 overflow-y-auto grid grid-cols-2 gap-3 pr-1">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Tabs (Rooms) -->
+    <nav class="bg-slate-900 border-t border-slate-800 p-2 grid grid-cols-5 gap-1 z-20">
+      <button data-room="kitchen" class="nav-btn active">
+        <i class="fa-solid fa-utensils text-lg"></i>
+        <span class="text-[10px] mt-1 font-bold">Dapur</span>
+      </button>
+      <button data-room="bathroom" class="nav-btn">
+        <i class="fa-solid fa-bath text-lg"></i>
+        <span class="text-[10px] mt-1 font-bold">Kamar Mandi</span>
+      </button>
+
+      <button data-room="bedroom" class="nav-btn">
+        <i class="fa-solid fa-bed text-lg"></i>
+        <span class="text-[10px] mt-1 font-bold">Tidur</span>
+      </button>
+      <button data-room="playroom" class="nav-btn">
+        <i class="fa-solid fa-gamepad text-lg"></i>
+        <span class="text-[10px] mt-1 font-bold">Bermain</span>
+      </button>
+      <button data-room="wardrobe" class="nav-btn">
+        <i class="fa-solid fa-shirt text-lg"></i>
+        <span class="text-[10px] mt-1 font-bold">Lemari</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
